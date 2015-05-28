@@ -32,7 +32,7 @@ public class MainActivity extends ActionBarActivity {
                     @Override
                     public void onPositiveButton(String chosenDir) {
                         pathView.setText(chosenDir);
-                        Toast.makeText(mContext, "Saving file was " + mChosenDir, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, "Path to save file: " + chosenDir, Toast.LENGTH_LONG).show();
                     }
                 });
                 myDialog.chooseFile_or_Dir();
@@ -47,7 +47,7 @@ public class MainActivity extends ActionBarActivity {
                     @Override
                     public void onPositiveButton(String chosenDir) {
                         pathView.setText(chosenDir);
-                        Toast.makeText(mContext, "ChosenDir: " + mChosenDir, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, "Chosen file: " + chosenDir, Toast.LENGTH_SHORT).show();
                     }
                 });
                 myDialog.mAllowedFileExts = new String[]{".jpg", ".jpeg", ".png"};
@@ -63,7 +63,7 @@ public class MainActivity extends ActionBarActivity {
                     @Override
                     public void onPositiveButton(String chosenDir) {
                         pathView.setText(chosenDir);
-                        Toast.makeText(mContext, "ChosenDir: " + mChosenDir, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, "ChosenDir: " + chosenDir, Toast.LENGTH_SHORT).show();
                     }
                 });
                 myDialog.chooseFile_or_Dir();

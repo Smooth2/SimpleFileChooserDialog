@@ -1,6 +1,10 @@
 package com.test.sampleapp;
 
 /*
+* original Author: Gregory Shpitalnik
+*       http://www.codeproject.com/Articles/547636/Android-Ready-to-use-simple-directory-chooser-dial
+*
+* Modifications by: Clemens Hlawacek
 *
 * This file is licensed under The Code Project Open License (CPOL) 1.02
 * http://www.codeproject.com/info/cpol10.aspx
@@ -30,6 +34,7 @@ import android.content.DialogInterface.OnClickListener;
 import android.graphics.Color;
 import android.os.Environment;
 import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -63,6 +68,7 @@ public class SimpleFileChooserDialog {
 
     public String mPosButtonText;
     public String mNegButtonText;
+    public String mNewFileDialogTitle;
     public String mDialogTitle;
     public int mRevertDirDrawable;
     public int mNewFolderDrawable;
@@ -82,6 +88,7 @@ public class SimpleFileChooserDialog {
     private List<String> mSubDirs = null;
     private SimpleFileDialogListener mSimpleFileDialogListener = null;
     private ArrayAdapter<String> mListAdapter;
+    private boolean mEnteredFilename;
 
 
     // Callback interface for selected directory
@@ -107,22 +114,24 @@ public class SimpleFileChooserDialog {
     private void initialiseOptionalFields() {
         mPosButtonText = "Ok";
         mNegButtonText = "Cancel";
-        if (mSelectionType == FILE_SELECT)      mDialogTitle = "Select file:";
-        if (mSelectionType == FILE_SAVE)        mDialogTitle = "Save file:";
-        if (mSelectionType == FOLDER_SELECT)    mDialogTitle = "Select folder:";
+        if (mSelectionType == FILE_SELECT)      mDialogTitle = "Select file";
+        if (mSelectionType == FILE_SAVE)        mDialogTitle = "Save file";
+        if (mSelectionType == FOLDER_SELECT)    mDialogTitle = "Select folder";
         mRevertDirDrawable = android.R.drawable.ic_menu_revert;
         mNewFolderDrawable = android.R.drawable.ic_menu_add;
         mNewFolderFailText = "Failed to create";
         mNewFolderPosButtonText = "Ok";
         mNewFolderNegButtonText = "Cancel";
+        mNewFileDialogTitle = "Enter file name";
         mNewFolderDialogTitle = "Enter folder name";
         mHideBackButtonInRootDir = true;
-        mFileSaveNoNameFailureText = "You need to enter a name for the file to save.";
+        mFileSaveNoNameFailureText = "You need to enter a valid name for the file to save.";
         mDialogTitleBackgroundColorHex = "#FF373737";
         mDialogDividerColorHex = mDialogTitleBackgroundColorHex;
         mAllowedFileExts = new String[] {};
         mAllowedFileExtsList = new ArrayList<>();
         mDisablePositiveButtonForWrongFilesAndDirs = true;
+        mEnteredFilename = false;
     }
 
     // If no directory is chosen, the standard SD-card directory will be used
@@ -136,9 +145,8 @@ public class SimpleFileChooserDialog {
     // If directory is chosen, use it, instead of standard dir.
     public void chooseFile_or_Dir(String dir) {
         if (mSelectionType == FILE_SAVE) {
-            simpleDialogEnterText();
-            if (mSelectedFileName == null) {
-                Toast.makeText(mContext, mFileSaveNoNameFailureText, Toast.LENGTH_SHORT).show();
+            if (!mEnteredFilename) {
+                simpleDialogEnterText();
                 return;
             }
         }
@@ -189,7 +197,6 @@ public class SimpleFileChooserDialog {
                 public void onClick(DialogInterface dialog, int which) {
                     if (mSimpleFileDialogListener != null) {
                         if (mSelectionType == FILE_SAVE) {
-                            // TODO: save file (entered text or given data(+allowed exts))
                             mSimpleFileDialogListener.onPositiveButton(mDir + File.separator + mSelectedFileName);
                         } else {
                             mSimpleFileDialogListener.onPositiveButton(mDir);
@@ -222,7 +229,7 @@ public class SimpleFileChooserDialog {
         if (!dir.exists() || !dir.isDirectory())
             return dirs;
         if (dir.listFiles() == null) {
-            System.out.println("No files to pick!");
+            System.err.println("ListFiles: No files to pick!");
             return dirs;
         }
         for (File file : dir.listFiles()) {
@@ -403,6 +410,7 @@ public class SimpleFileChooserDialog {
 
     private void simpleDialogEnterText() {
         final EditText input = new EditText(mContext);
+        input.addTextChangedListener(new fileExtensionCheckListener(input));
         input.setGravity(Gravity.CENTER);
         LinearLayout titleCont = new LinearLayout(mContext);
         titleCont.setOrientation(LinearLayout.HORIZONTAL);
@@ -413,18 +421,52 @@ public class SimpleFileChooserDialog {
         TextView tv_mNewFolderDialogTitle = new TextView(mContext);
         tv_mNewFolderDialogTitle.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, 4.0f));
         tv_mNewFolderDialogTitle.setTextAppearance(mContext, android.R.style.TextAppearance_Large);
-        tv_mNewFolderDialogTitle.setText(mNewFolderDialogTitle);
+        tv_mNewFolderDialogTitle.setText(mNewFileDialogTitle);
         tv_mNewFolderDialogTitle.setTextColor(mContext.getResources().getColor(android.R.color.white));
         titleCont.addView(tv_mNewFolderDialogTitle);
         AlertDialog newFolder = new AlertDialog.Builder(mContext).setCustomTitle(titleCont).setView(input)
                 .setPositiveButton(mNewFolderPosButtonText, new OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
-                        Editable newDir = input.getText();
-                        mSelectedFileName = newDir.toString();
+                        String newDir = String.valueOf(input.getText());
+                        if (newDir == null || newDir.equals("")) {
+                            Toast.makeText(mContext, mFileSaveNoNameFailureText, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        mEnteredFilename = true;
+                        mSelectedFileName = newDir;
+                        mDialogTitle = mDialogTitle + " '" +mSelectedFileName + "'";
+                        chooseFile_or_Dir();
                     }
-                }).setNegativeButton(mNewFolderNegButtonText, null).show();
+                }).setNegativeButton(mNewFolderNegButtonText, new OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(mContext, mFileSaveNoNameFailureText, Toast.LENGTH_SHORT).show();
+                    }
+                }).show();
         int dividerID = newFolder.getContext().getResources().getIdentifier("android:id/titleDivider", null, null);
         View mDivider = newFolder.findViewById(dividerID);
         mDivider.setBackgroundColor(Color.parseColor(mDialogDividerColorHex));
+    }
+
+    private class fileExtensionCheckListener implements TextWatcher {
+        EditText inputField;
+        public fileExtensionCheckListener(EditText input) {
+            inputField = input;
+        }
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            String text = String.valueOf(inputField.getText());
+            if (text.length() == 0 || text == null || text.equals("")) {
+                Toast.makeText(mContext, mFileSaveNoNameFailureText, Toast.LENGTH_SHORT).show();
+            } else if (text.contains("."))
+                if (!mAllowedFileExtsList.contains(text.substring(text.lastIndexOf(".")))
+                        && text.substring(text.lastIndexOf(".")).length() > 2) {
+                    Toast.makeText(mContext, mFileSaveNoNameFailureText, Toast.LENGTH_SHORT).show();
+                }
+        }
+        @Override
+        public void afterTextChanged(Editable s) { }
     }
 }
