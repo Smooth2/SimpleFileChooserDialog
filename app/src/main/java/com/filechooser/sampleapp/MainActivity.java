@@ -1,4 +1,4 @@
-package com.test.sampleapp;
+package com.filechooser.sampleapp;
 
 import android.content.Context;
 import android.support.v7.app.ActionBarActivity;

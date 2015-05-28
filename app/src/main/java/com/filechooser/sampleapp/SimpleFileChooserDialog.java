@@ -1,4 +1,4 @@
-package com.test.sampleapp;
+package com.filechooser.sampleapp;
 
 /*
 * original Author: Gregory Shpitalnik

@@ -1,4 +1,4 @@
-package com.test.sampleapp;
+package com.filechooser.sampleapp;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
