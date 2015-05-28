@@ -81,7 +81,6 @@ public class SimpleFileChooserDialog {
     public String mDialogDividerColorHex;
     public String[] mAllowedFileExts;
     public String mFileSaveNoNameFailureText;
-    public boolean mDisablePositiveButtonForWrongFilesAndDirs;
 
     private ArrayList<String> mAllowedFileExtsList;
     private String mDir = "";
@@ -130,7 +129,6 @@ public class SimpleFileChooserDialog {
         mDialogDividerColorHex = mDialogTitleBackgroundColorHex;
         mAllowedFileExts = new String[] {};
         mAllowedFileExtsList = new ArrayList<>();
-        mDisablePositiveButtonForWrongFilesAndDirs = true;
         mEnteredFilename = false;
     }
 
