@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">SampleApp</string>
+
+    <string name="path">placeholder</string>
+    <string name="btn1">Choose directory</string>
+    <string name="btn3">Save a file</string>
+    <string name="btn2">Choose image file</string>
+</resources>
