@@ -8,6 +8,9 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 
 public class MainActivity extends ActionBarActivity {
     Button dirButton;
@@ -35,6 +38,11 @@ public class MainActivity extends ActionBarActivity {
                         Toast.makeText(mContext, "Path to save file: " + chosenDir, Toast.LENGTH_LONG).show();
                     }
                 });
+                ArrayList<String> myExts = new ArrayList<>();
+                myExts.add(".jpg");
+                myExts.add(".jpeg");
+                myExts.add(".png");
+                myDialog.mAllowedFileExtsList = myExts;
                 myDialog.chooseFile_or_Dir();
             }
         });
@@ -50,7 +58,11 @@ public class MainActivity extends ActionBarActivity {
                         Toast.makeText(mContext, "Chosen file: " + chosenDir, Toast.LENGTH_SHORT).show();
                     }
                 });
-                myDialog.mAllowedFileExts = new String[]{".jpg", ".jpeg", ".png"};
+                ArrayList<String> myExts = new ArrayList<>();
+                myExts.add(".jpg");
+                myExts.add(".jpeg");
+                myExts.add(".png");
+                myDialog.mAllowedFileExtsList = myExts;
                 myDialog.chooseFile_or_Dir();
             }
         });
