@@ -28,6 +28,7 @@ package com.filechooser.sampleapp;
 */
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
@@ -41,6 +42,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -79,10 +81,9 @@ public class SimpleFileChooserDialog {
     public Boolean mHideBackButtonInRootDir;
     public String mDialogTitleBackgroundColorHex;
     public String mDialogDividerColorHex;
-    public String[] mAllowedFileExts;
     public String mFileSaveNoNameFailureText;
+    public ArrayList<String> mAllowedFileExtsList;
 
-    private ArrayList<String> mAllowedFileExtsList;
     private String mDir = "";
     private List<String> mSubDirs = null;
     private SimpleFileDialogListener mSimpleFileDialogListener = null;
@@ -127,7 +128,6 @@ public class SimpleFileChooserDialog {
         mFileSaveNoNameFailureText = "You need to enter a valid name for the file to save.";
         mDialogTitleBackgroundColorHex = "#FF373737";
         mDialogDividerColorHex = mDialogTitleBackgroundColorHex;
-        mAllowedFileExts = new String[] {};
         mAllowedFileExtsList = new ArrayList<>();
         mEnteredFilename = false;
     }
@@ -149,9 +149,6 @@ public class SimpleFileChooserDialog {
             }
         }
 
-        if (mAllowedFileExts.length > 0) {
-            Collections.addAll(mAllowedFileExtsList, mAllowedFileExts);
-        }
         File dirFile = new File(dir);
         if (!dirFile.exists() || !dirFile.isDirectory())    // if the given dir is invalid, use standard
             dir = mDirSdCardPath;
@@ -235,9 +232,9 @@ public class SimpleFileChooserDialog {
                 dirs.add( file.getName() + "/" );       // Add "/" to directory names to identify them in the list
             } else if (mSelectionType == FILE_SAVE || mSelectionType == FILE_SELECT) {
                 String fName = file.getName();
-                if (mAllowedFileExts.length > 0) {
+                if (mAllowedFileExtsList.size() > 0) {
                     if (fName.contains(".")) {
-                        if (mAllowedFileExtsList. contains(fName.substring(fName.lastIndexOf("."), fName.length()))) {
+                        if (mAllowedFileExtsList.contains(fName.substring(fName.lastIndexOf("."), fName.length()))) {
                             dirs.add(file.getName());             // Add file names to the list if we are doing a file save or file open
                         }
                     }
@@ -406,6 +403,7 @@ public class SimpleFileChooserDialog {
         };
     }
 
+    private Button posButton = null;   // New filename Dialog positive button
     private void simpleDialogEnterText() {
         final EditText input = new EditText(mContext);
         input.addTextChangedListener(new fileExtensionCheckListener(input));
@@ -422,7 +420,7 @@ public class SimpleFileChooserDialog {
         tv_mNewFolderDialogTitle.setText(mNewFileDialogTitle);
         tv_mNewFolderDialogTitle.setTextColor(mContext.getResources().getColor(android.R.color.white));
         titleCont.addView(tv_mNewFolderDialogTitle);
-        AlertDialog newFolder = new AlertDialog.Builder(mContext).setCustomTitle(titleCont).setView(input)
+        AlertDialog.Builder newFolder = new AlertDialog.Builder(mContext).setCustomTitle(titleCont).setView(input)
                 .setPositiveButton(mNewFolderPosButtonText, new OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         String newDir = String.valueOf(input.getText());
@@ -432,7 +430,7 @@ public class SimpleFileChooserDialog {
                         }
                         mEnteredFilename = true;
                         mSelectedFileName = newDir;
-                        mDialogTitle = mDialogTitle + " '" +mSelectedFileName + "'";
+                        mDialogTitle = mDialogTitle + " '" + mSelectedFileName + "'";
                         chooseFile_or_Dir();
                     }
                 }).setNegativeButton(mNewFolderNegButtonText, new OnClickListener() {
@@ -440,10 +438,22 @@ public class SimpleFileChooserDialog {
                     public void onClick(DialogInterface dialog, int which) {
                         Toast.makeText(mContext, mFileSaveNoNameFailureText, Toast.LENGTH_SHORT).show();
                     }
-                }).show();
-        int dividerID = newFolder.getContext().getResources().getIdentifier("android:id/titleDivider", null, null);
-        View mDivider = newFolder.findViewById(dividerID);
-        mDivider.setBackgroundColor(Color.parseColor(mDialogDividerColorHex));
+                });
+        AlertDialog newFolderDialog = newFolder.create();
+        newFolderDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                    @Override
+                    public void onShow(DialogInterface dialog) {
+                        posButton = ((AlertDialog) dialog).getButton(AlertDialog.BUTTON_POSITIVE);
+                    }
+                });
+        newFolderDialog.show();
+        int dividerID = newFolderDialog.getContext().getResources().getIdentifier("android:id/titleDivider", null, null);
+        if (dividerID != 0) {
+            View mDivider = newFolderDialog.findViewById(dividerID);
+            if (mDivider != null) {
+                mDivider.setBackgroundColor(Color.parseColor(mDialogDividerColorHex));
+            }
+        }
     }
 
     private class fileExtensionCheckListener implements TextWatcher {
@@ -457,12 +467,19 @@ public class SimpleFileChooserDialog {
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             String text = String.valueOf(inputField.getText());
             if (text.length() == 0 || text == null || text.equals("")) {
+                if (posButton != null) posButton.setEnabled(false);
                 Toast.makeText(mContext, mFileSaveNoNameFailureText, Toast.LENGTH_SHORT).show();
-            } else if (text.contains("."))
+            } else if (text.contains(".") && mAllowedFileExtsList.size() > 0) {
                 if (!mAllowedFileExtsList.contains(text.substring(text.lastIndexOf(".")))
-                        && text.substring(text.lastIndexOf(".")).length() > 2) {
+                        && text.substring(text.lastIndexOf(".")).length() > 3) {
+                    if (posButton != null) posButton.setEnabled(false);
                     Toast.makeText(mContext, mFileSaveNoNameFailureText, Toast.LENGTH_SHORT).show();
+                } else {
+                    if (posButton != null) posButton.setEnabled(true);
                 }
+            } else {
+                if (posButton != null) posButton.setEnabled(true);
+            }
         }
         @Override
         public void afterTextChanged(Editable s) { }
